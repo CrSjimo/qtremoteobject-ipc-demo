@@ -38,30 +38,28 @@ int main(int argc, char **argv) {
 
     auto roKey = QUuid::createUuid().toString(QUuid::Id128);
     auto aliveKey = QUuid::createUuid().toString(QUuid::Id128);
+    qDebug() << roKey << aliveKey;
 
     QRemoteObjectNode repNode;
     repNode.connectToNode(QUrl("local:" + roKey));
 
-    std::unique_ptr<DemoReplica> rep(repNode.acquire<DemoReplica>());
+    std::unique_ptr<DemoReplica> rep_(repNode.acquire<DemoReplica>());
 
-    QObject::connect(callButton, &QAbstractButton::clicked, [&] {
-        auto ret = rep->add(arg1SpinBox->value(), arg2SpinBox->value());
-        auto watcher = new QRemoteObjectPendingCallWatcher(ret);
+    auto rep = rep_.get();
+
+    QObject::connect(callButton, &QAbstractButton::clicked, [=] {
+        rep->add(arg1SpinBox->value(), arg2SpinBox->value());
         callButton->setDisabled(true);
-        QObject::connect(watcher, &QRemoteObjectPendingCallWatcher::finished, [=](QRemoteObjectPendingCallWatcher *self) {
-            callButton->setDisabled(false);
-            if (self->error() == QRemoteObjectPendingCall::InvalidMessage)
-                resultLabel->setText("Result: ERROR");
-            else
-                resultLabel->setText("Result: " + QString::number(self->returnValue().toInt()));
-            progressBar->setValue(0);
-            self->deleteLater();
-        });
     });
 
-    QObject::connect(rep.get(), &DemoReplica::progressChanged, progressBar, &QProgressBar::setValue);
+    QObject::connect(rep, &DemoReplica::progressChanged, progressBar, &QProgressBar::setValue);
+    QObject::connect(rep, &DemoReplica::completed, [=](int value) {
+        resultLabel->setText("Result: " + QString::number(value));
+        progressBar->setValue(0);
+        callButton->setDisabled(false);
+    });
 
-    QObject::connect(rep.get(), &QRemoteObjectReplica::stateChanged, [=](QRemoteObjectReplica::State state) {
+    QObject::connect(rep, &QRemoteObjectReplica::stateChanged, [=](QRemoteObjectReplica::State state) {
         auto e = QMetaEnum::fromType<QRemoteObjectReplica::State>();
         stateLabel->setText(QString("State: ") + e.valueToKey(state));
     });

@@ -8,7 +8,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(Qt5 COMPONENTS Core Gui Widgets RemoteObjects REQUIRED)
+find_package(Qt5 COMPONENTS Core Gui Widgets Concurrent RemoteObjects REQUIRED)
 
 add_subdirectory(child)
 

@@ -8,7 +8,7 @@ public:
     explicit Demo(QObject *parent = nullptr);
     ~Demo() override;
 
-    int add(int a, int b) override;
+    void add(int a, int b) override;
 };
 
 
